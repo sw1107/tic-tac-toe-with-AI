@@ -24,18 +24,30 @@ def play_game():
     while not is_game_over:
 
         if current_player == 0:
+            if number_of_moves == 0:
+                print("Computer thinking...")
             current_board = deepcopy(BOARD)
             next_move = minimax(current_board, current_player)[1]
-            print(f"Computer move: {next_move + 1}")
+            if BOARD[next_move] != " ":
+                print(f"Computer move invalid: {next_move}")
+                return
+            else:
+                print(f"Computer move: {next_move + 1}")
         else:
-            next_move = int(input(f"Player move? Type 1-9: "))
-            # TODO: improve validation of inputs
-
-        # validate move
-        # TODO: improve validation so player/computer can't play in space already played in
-        if current_player == 0 and BOARD[next_move] != " ":
-            print(f"Computer move invalid: {next_move}")
-            return
+            while True:
+                next_move = input(f"Player move? Type 1-9: ")
+                try:
+                    next_move = int(next_move)
+                except ValueError:
+                    print("Move not valid")
+                    pass
+                if next_move in range(1, 10):
+                    if BOARD[next_move - 1] == " ":
+                        break
+                    else:
+                        print("Move not available")
+                else:
+                    print("Move not valid")
 
         # update board with move
         if current_player == 0:
@@ -107,7 +119,7 @@ def value_board(current_board):
     """
     Returns numerical value for terminal state of current_board
     """
-    # TODO: improve the value_board function (find a way to sum indices?)
+    # TODO: improve the value_board function
     if ((current_board[0] == current_board[1] == current_board[2] and current_board[0] == "x") or
             (current_board[3] == current_board[4] == current_board[5] and current_board[3] == "x") or
             (current_board[6] == current_board[7] == current_board[8] and current_board[6] == "x") or
@@ -174,17 +186,6 @@ def minimax(current_board, current_player):
                 best_move = action
         # return value, best_move
     return value, best_move
-
-
-# def test():
-#     BOARD = {0: 'x', 1: 'o', 2: 'x', 3: 'x', 4: ' ', 5: 'o', 6: 'o', 7: ' ', 8: ' '}
-#     current_player = 0
-#     current_board = deepcopy(BOARD)
-#     next_move = minimax(current_board, current_player)[1]
-#     print(f"Computer move: {next_move + 1}")
-#
-#
-# test()
 
 
 if __name__ == "__main__":
