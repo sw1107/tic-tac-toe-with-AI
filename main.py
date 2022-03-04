@@ -1,3 +1,4 @@
+from copy import deepcopy
 from itertools import cycle
 from random import randint
 
@@ -23,22 +24,22 @@ def play_game():
     while not is_game_over:
 
         if current_player == 0:
-            current_board = {key: value for (key, value) in BOARD.items()}
+            current_board = deepcopy(BOARD)
             next_move = minimax(current_board, current_player)[1]
-            print(f"Computer move: {next_move}")
-            # TODO: computer shouldn't be able to move in space already played in
+            print(f"Computer move: {next_move + 1}")
         else:
-            # TODO: player shouldn't be able to move in space already played in
             next_move = int(input(f"Player move? Type 1-9: "))
+            # TODO: improve validation of inputs
 
         # validate move
-        if BOARD[next_move - 1] != " ":
+        # TODO: improve validation so player/computer can't play in space already played in
+        if current_player == 0 and BOARD[next_move] != " ":
             print(f"Computer move invalid: {next_move}")
             return
 
         # update board with move
         if current_player == 0:
-            BOARD[next_move - 1] = 'x'
+            BOARD[next_move] = 'x'
         else:
             BOARD[next_move - 1] = 'o'
 
@@ -50,23 +51,20 @@ def play_game():
 
         # check for game over
         if number_of_moves >= 5:
-            is_game_over = check_game_over()
-        if number_of_moves == 9 and is_game_over is False:
-            is_game_over = True
-            print_board()
-            print(f"Game over: No winner\n")
-            return
+            is_game_over = check_game_over(BOARD)
 
-    # print final board and announce winner
-    print_board()
-    winner = next(player)
-    if winner == 0:
-        print(f"Game over: Computer is the winner! \n")
+    # compute value of final board and declare winner
+    final_board_value = value_board(BOARD)
+    if final_board_value == 1:
+        print("Game over: Computer is the winner! \n")
+    elif final_board_value == -1:
+        print("Game over: Player is the winner! \n")
     else:
-        print(f"Game over: Player is the winner! \n")
+        print("Game over: No winner\n")
 
 
 def check_game_over(current_board):
+    # TODO: improve check_game_over function
     if ((current_board[0] == current_board[1] == current_board[2] and current_board[0] != " ") or
             (current_board[3] == current_board[4] == current_board[5] and current_board[3] != " ") or
             (current_board[6] == current_board[7] == current_board[8] and current_board[6] != " ") or
@@ -74,7 +72,9 @@ def check_game_over(current_board):
             (current_board[1] == current_board[4] == current_board[7] and current_board[1] != " ") or
             (current_board[2] == current_board[5] == current_board[8] and current_board[2] != " ") or
             (current_board[0] == current_board[4] == current_board[8] and current_board[0] != " ") or
-            (current_board[2] == current_board[4] == current_board[6] and current_board[2] != " ")):
+            (current_board[2] == current_board[4] == current_board[6] and current_board[2] != " ") or
+            # or all squares are full
+            (not (" " in current_board.values()))):
         return True
     else:
         return False
@@ -107,6 +107,7 @@ def value_board(current_board):
     """
     Returns numerical value for terminal state of current_board
     """
+    # TODO: improve the value_board function (find a way to sum indices?)
     if ((current_board[0] == current_board[1] == current_board[2] and current_board[0] == "x") or
             (current_board[3] == current_board[4] == current_board[5] and current_board[3] == "x") or
             (current_board[6] == current_board[7] == current_board[8] and current_board[6] == "x") or
@@ -140,29 +141,30 @@ def result(current_board, action, current_player):
     """
     Returns board after action taken in state of current_board
     """
+    result_board = deepcopy(current_board)
     if current_player == 0:
-        current_board[action] = "x"
+        result_board[action] = "x"
     else:
-        current_board[action] = "o"
-    return current_board
+        result_board[action] = "o"
+    return result_board
 
 
 def minimax(current_board, current_player):
     """
     Returns value of state of current_board and best move
     """
-    # TODO: current_board doesn't reset through iterations of the recursion
-    best_move = None
     if check_game_over(current_board):
-        return value_board(current_board), best_move
-    elif current_player == 0:
+        return value_board(current_board), None
+
+    best_move = None
+    if current_player == 0:
         value = -100
         for action in available_moves(current_board):
             new_value = minimax(result(current_board, action, 0), 1)[0]
             if new_value > value:
                 value = new_value
                 best_move = action
-        return value, best_move
+        # return value, best_move
     else:
         value = 100
         for action in available_moves(current_board):
@@ -170,43 +172,20 @@ def minimax(current_board, current_player):
             if new_value < value:
                 value = new_value
                 best_move = action
-        return value, best_move
-
-
-# def max_value(current_board):
-#     if check_game_over():
-#         return value_board(current_board)
-#     else:
-#         value = -100
-#         for action in available_moves(current_board):
-#             value = max(value, min_value(result(current_board, action)))
-#         return value
-#
-#
-# def min_value(current_board):
-#     if check_game_over():
-#         return value_board(current_board)
-#     else:
-#         value = 100
-#         for action in available_moves(current_board):
-#             value = min(max_value(result(current_board, action)))
-#         return value
+        # return value, best_move
+    return value, best_move
 
 
 # def test():
-#     reset_board()
-#
-#     current_player = next(player)
-#     current_player = next(player)
-#
-#     BOARD[1] = "x"
-#     BOARD[2] = "o"
-#     current_board = BOARD
-#     next_move = minimax(current_board, current_player)
-#     print(next_move)
+#     BOARD = {0: 'x', 1: 'o', 2: 'x', 3: 'x', 4: ' ', 5: 'o', 6: 'o', 7: ' ', 8: ' '}
+#     current_player = 0
+#     current_board = deepcopy(BOARD)
+#     next_move = minimax(current_board, current_player)[1]
+#     print(f"Computer move: {next_move + 1}")
 #
 #
 # test()
+
 
 if __name__ == "__main__":
     main()
